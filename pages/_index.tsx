@@ -1,11 +1,10 @@
 import React, { useMemo, useState } from "react";
-import { ArrowUpRight, Crosshair, Search, Shield, Swords, Zap, ChevronRight, X, Activity, Target, Clock3, Menu } from "lucide-react";
+import { ArrowUpRight, Crosshair, Search, Shield, Zap, ChevronRight, X, Activity, Target, Menu } from "lucide-react";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
 import { Badge } from "../components/Badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/Select";
-import { useScrollReveal } from "../helpers/useScrollReveal";
-import styles from "./index.module.css";
+import styles from "./_index.module.css";
 
 type Weapon = { name: string; category: string; ammo: string; role: string };
 const weapons: Weapon[] = [
@@ -49,7 +48,6 @@ export default function HomePage() {
   const [damage, setDamage] = useState("18");
   const [health, setHealth] = useState("200");
   const [mobileMenu, setMobileMenu] = useState(false);
-  const reveal = useScrollReveal();
   const filteredWeapons = useMemo(() => weapons.filter((weapon) => weapon.name.toLowerCase().includes(search.toLowerCase()) && (category === "Alle Klassen" || weapon.category === category)), [search, category]);
   const hitDamage = Math.max(1, Number(damage) || 1);
   const targetHealth = Math.max(1, Number(health) || 1);
@@ -74,27 +72,21 @@ export default function HomePage() {
         </div><div className={styles.heroVisual} aria-hidden="true"><div className={`${styles.orbit} ${styles.orbitOne}`}/><div className={`${styles.orbit} ${styles.orbitTwo}`}/><div className={styles.targetDisc}><div className={styles.targetInner}><Crosshair size={100} strokeWidth={1}/></div></div><div className={styles.visualLabel}><span>FIELD INTEL</span><strong>READY</strong></div><div className={styles.visualCode}>APX / 001<br/>TACTICAL SYSTEMS</div></div></div></section>
         <section className={styles.statStrip}><div><strong>29</strong><span>Waffen im Katalog</span></div><div><strong>06</strong><span>Bereiche geplant</span></div><div><strong>01</strong><span>Plattform</span></div><div><strong>LIVE</strong><span>Lokale Vorschau</span></div></section>
       </>}
-
       <div id="content" className={styles.contentWrap}>
         {activeTab === "Start" && <>
-          <section className={styles.sectionBlock} ref={reveal}><div className={styles.sectionHeading}><div><div className={styles.eyebrow}>01 / COMMAND CENTER</div><h2>WÄHLE DEINEN <span>VORTEIL.</span></h2></div><p>Alles, was du für den nächsten Drop brauchst.</p></div>
+          <section className={styles.sectionBlock}><div className={styles.sectionHeading}><div><div className={styles.eyebrow}>01 / COMMAND CENTER</div><h2>WÄHLE DEINEN <span>VORTEIL.</span></h2></div><p>Alles, was du für den nächsten Drop brauchst.</p></div>
             <div className={styles.featureGrid}>
               <button className={styles.featureCard} onClick={() => goTo("Waffen")}><div className={styles.featureTop}><Crosshair/><span>01</span></div><h3>WEAPON<br/>INTEL</h3><p>Waffenprofile, Klassen und Werte – mit sauberem Quellenstatus.</p><div className={styles.cardLink}>ARSENAL ÖFFNEN <ChevronRight size={16}/></div></button>
               <button className={styles.featureCard} onClick={() => goTo("Meta")}><div className={styles.featureTop}><Activity/><span>02</span></div><h3>META<br/>TRACKER</h3><p>Season-Meta und historische Phasen einer Waffe im Überblick.</p><div className={styles.cardLink}>META ANSEHEN <ChevronRight size={16}/></div></button>
               <button className={styles.featureCard} onClick={() => goTo("Tools")}><div className={styles.featureTop}><Target/><span>03</span></div><h3>COMBAT<br/>TOOLS</h3><p>Damage-Rechner und weitere taktische Hilfsmittel.</p><div className={styles.cardLink}>TOOLS ÖFFNEN <ChevronRight size={16}/></div></button>
             </div>
           </section>
-          <section className={styles.sectionBlock} ref={reveal}><div className={styles.sectionHeading}><div><div className={styles.eyebrow}>02 / PROJECT STATUS</div><h2>WAS ALS NÄCHSTES <span>KOMMT.</span></h2></div></div><div className={styles.roadmap}><div><Badge variant="success">BASIS</Badge><strong>Website-Grundgerüst</strong><span>Navigation, Mobile-Layout und Waffenübersicht</span></div><div><Badge variant="warning">IN ARBEIT</Badge><strong>Verifizierte Spieldaten</strong><span>Damage, Fire Rate, Magazine und Patch-Historie</span></div><div><Badge variant="outline">GEPLANT</Badge><strong>Meta & Live-Integrationen</strong><span>All-Time-Meta, Ranked, Rotation und Statsuche</span></div></div></section>
+          <section className={styles.sectionBlock}><div className={styles.sectionHeading}><div><div className={styles.eyebrow}>02 / PROJECT STATUS</div><h2>WAS ALS NÄCHSTES <span>KOMMT.</span></h2></div></div><div className={styles.roadmap}><div><Badge variant="success">BASIS</Badge><strong>Website-Grundgerüst</strong><span>Navigation, Mobile-Layout und Waffenübersicht</span></div><div><Badge variant="warning">IN ARBEIT</Badge><strong>Verifizierte Spieldaten</strong><span>Damage, Fire Rate, Magazine und Patch-Historie</span></div><div><Badge variant="outline">GEPLANT</Badge><strong>GEPLANT</strong><span>All-Time-Meta, Ranked, Rotation und Statsuche</span></div></div></section>
         </>}
-
         {activeTab === "Waffen" && <section className={styles.sectionBlock}><div className={styles.sectionHeading}><div><div className={styles.eyebrow}>ARSENAL / DATABASE</div><h2>WAFFEN <span>ÜBERSICHT.</span></h2></div><Badge variant="outline">{filteredWeapons.length} EINTRÄGE</Badge></div><div className={styles.filters}><div className={styles.searchBox}><Search size={17}/><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Waffe suchen …" aria-label="Waffe suchen"/></div><Select value={category} onValueChange={setCategory}><SelectTrigger className={styles.categorySelect}><SelectValue placeholder="Waffengattung"/></SelectTrigger><SelectContent>{categories.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select></div><div className={styles.weaponGrid}>{filteredWeapons.map((weapon, index) => <button key={weapon.name} className={styles.weaponCard} onClick={() => setSelectedWeapon(weapon)}><div className={styles.weaponIndex}>APX-{String(index + 1).padStart(2,"0")}<span>{weapon.ammo}</span></div><h3>{weapon.name}</h3><div className={styles.weaponMeta}><span>{weapon.category}</span><span>{weapon.role}</span></div><div className={styles.weaponOpen}>PROFIL ANSEHEN <ArrowUpRight size={14}/></div></button>)}</div><p className={styles.dataNote}>Hinweis: Diese erste Liste enthält Waffenbezeichnungen und Kategorien. Numerische Balance-Werte werden erst nach Prüfung der aktuellen Spielversion ergänzt.</p></section>}
-
         {activeTab === "Meta" && <section className={styles.sectionBlock}><div className={styles.eyebrow}>COMPETITIVE INTELLIGENCE</div><h2>SEASON META <span>& ARCHIV.</span></h2><div className={styles.callout}><Zap/><div><strong>Meta-Daten werden verifiziert aufgebaut.</strong><p>Keine erfundenen Tier-Listen: Jede Einstufung erhält einen Season-/Patch-Zeitraum und nachvollziehbare Datenquellen.</p></div></div><div className={styles.featureGrid}><div className={styles.infoCard}><span>01 / LIVE META</span><h3>Aktuelle Season</h3><p>Waffen- und Legenden-Picks, getrennt nach Ranked und Competitive.</p></div><div className={styles.infoCard}><span>02 / HISTORY</span><h3>All-Time-Meta</h3><p>Zeigt, wann eine Waffe Meta war und wann sie durch Balance-Änderungen abgelöst wurde.</p></div><div className={styles.infoCard}><span>03 / PATCH LOG</span><h3>Patch-Verlauf</h3><p>Buffs, Nerfs und Anpassungen mit Datum und Versionsbezug.</p></div></div></section>}
-
         {activeTab === "Legenden" && <section className={styles.sectionBlock}><div className={styles.eyebrow}>ROSTER / TEAM COMPOSITION</div><h2>LEGENDEN <span>INTEL.</span></h2><div className={styles.callout}><Shield/><div><strong>Legenden-Datenbank ist als nächster Ausbau vorgesehen.</strong><p>Profile, Fähigkeiten, Rollen, Synergien und Meta-Einstufungen werden nach aktuellem Balance-Stand ergänzt.</p></div></div></section>}
-
         {activeTab === "Ranked" && <section className={styles.sectionBlock}><div className={styles.eyebrow}>RANKED OPERATIONS</div><h2>CLIMB THE <span>LADDER.</span></h2><div className={styles.featureGrid}><div className={styles.infoCard}><span>RP CALCULATOR</span><h3>Ranked Punkte</h3><p>Platzierung, Kills/Assists und Entry Cost je Rang berechnen.</p></div><div className={styles.infoCard}><span>MAP ROTATION</span><h3>Aktive Karten</h3><p>Rotationen mit Zeitstempel und Quelle anzeigen, sobald Live-Daten angebunden sind.</p></div><div className={styles.infoCard}><span>RANKED GUIDES</span><h3>Strategie</h3><p>Teamrollen, Loadouts und Entscheidungshilfen für den Ranked-Grind.</p></div></div></section>}
-
         {activeTab === "Tools" && <section className={styles.sectionBlock}><div className={styles.eyebrow}>COMBAT CALCULATOR</div><h2>DAMAGE <span>SIMULATOR.</span></h2><div className={styles.calculator}><div className={styles.calcIntro}><Target size={28}/><h3>Treffer-Rechner</h3><p>Berechnet benötigte Treffer anhand des angenommenen Schadens pro Treffer. Vereinfachtes Modell ohne Helm, Trefferzone oder Legenden-Passives.</p></div><div className={styles.calcInputs}><label>Schaden pro Treffer<Input type="number" min="1" value={damage} onChange={(event) => setDamage(event.target.value)}/></label><label>Gegner-Leben + Schild<Input type="number" min="1" value={health} onChange={(event) => setHealth(event.target.value)}/></label></div><div className={styles.calcResults}><div><span>TREFFER NÖTIG</span><strong>{shots}</strong></div><div><span>GESAMTSCHADEN</span><strong>{shots * hitDamage}</strong></div><div><span>ÜBERSCHUSS</span><strong>{shots * hitDamage - targetHealth}</strong></div></div></div></section>}
       </div>
     </main>
