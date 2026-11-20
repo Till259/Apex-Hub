@@ -1,0 +1,1 @@
+APEX HUB GitHub write-permission verification. This file can be removed after the test.
