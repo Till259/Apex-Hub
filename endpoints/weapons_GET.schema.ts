@@ -23,5 +23,6 @@ export type WeaponsResponse = {
     sourceUrl: string | null;
     verifiedAt: string | null;
   }>;
-  dataStatus: "verified" | "partial" | "empty";
+  dataStatus: "verified" | "partial" | "catalog-only" | "empty";
+  quality: { total: number; sourced: number; withDamageValues: number; fullyVerified: number };
 };
