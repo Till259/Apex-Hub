@@ -1,102 +1,89 @@
 import { db } from "../helpers/db";
 import { weaponDataRefreshBodySchema, type WeaponDataRefreshResponse } from "./weapon-data-refresh_POST.schema";
 
-const SOURCE = "https://apexlens.gg/weapons/";
-const DATA_VERSION = "Marked Midseason · effective 2026-09-15 · verified 2026-09-28";
-const EXPECTED: Record<string,string> = {
-  "R-301 Carbine":"r301","VK-47 Flatline":"flatline","Havoc Rifle":"havoc",
-  "Nemesis Burst AR":"nemesis","M600 Spitfire":"spitfire",
-  "Devotion LMG":"devotion","Rampage LMG":"rampage","G7 Scout":"g7",
-  "30-30 Repeater":"3030","Bocek Compound Bow":"bocek","Triple Take":"triple-take",
-  "P2020":"p2020","RE-45":"re45","EVA-8 Auto":"eva8",
-  "Mozambique Shotgun":"mozambique","Peacekeeper":"peacekeeper","Mastiff Shotgun":"mastiff",
-  "Alternator SMG":"alternator","C.A.R. SMG":"car","R-99 SMG":"r99",
-  "Volt SMG":"volt","Charge Rifle":"charge-rifle","Longbow DMR":"longbow","Sentinel":"sentinel",
-  "Kraber .50-Cal Sniper":"kraber",
+const BASE = "https://apex-legends.ttkdb.com";
+const VERSION = "Season 31 Cipher · baseline 2026-11-04 · checked 2026-11-22";
+const WEAPONS: Record<string,{id:string;name:string;slug:string;category:string;ammo:string}> = {
+  "havoc":{id:"havoc",name:"HAVOC Rifle",slug:"havoc",category:"Sturmgewehr",ammo:"Energie"},
+  "flatline":{id:"flatline",name:"VK-47 Flatline",slug:"flatline",category:"Sturmgewehr",ammo:"Schwer"},
+  "hemlok":{id:"hemlok",name:"Hemlok Burst AR",slug:"hemlok",category:"Sturmgewehr",ammo:"Schwer"},
+  "r301":{id:"r301",name:"R-301 Carbine",slug:"r-301",category:"Sturmgewehr",ammo:"Leicht"},
+  "nemesis":{id:"nemesis",name:"Nemesis Burst AR",slug:"nemesis",category:"Sturmgewehr",ammo:"Energie"},
+  "prowler":{id:"prowler",name:"Prowler Burst PDW",slug:"prowler",category:"Maschinenpistole",ammo:"Schwer"},
+  "alternator":{id:"alternator",name:"Alternator SMG",slug:"alternator",category:"Maschinenpistole",ammo:"Leicht"},
+  "r99":{id:"r99",name:"R-99 SMG",slug:"r-99",category:"Maschinenpistole",ammo:"Leicht"},
+  "volt":{id:"volt",name:"Volt SMG",slug:"volt",category:"Maschinenpistole",ammo:"Energie"},
+  "car":{id:"car",name:"C.A.R. SMG",slug:"car",category:"Maschinenpistole",ammo:"Leicht / Schwer"},
+  "devotion":{id:"devotion",name:"Devotion LMG",slug:"devotion",category:"Leichtes MG",ammo:"Energie"},
+  "lstar":{id:"lstar",name:"L-STAR EMG",slug:"l-star",category:"Leichtes MG",ammo:"Energie"},
+  "spitfire":{id:"spitfire",name:"M600 Spitfire",slug:"spitfire",category:"Leichtes MG",ammo:"Leicht"},
+  "rampage":{id:"rampage",name:"Rampage LMG",slug:"rampage",category:"Leichtes MG",ammo:"Schwer"},
+  "g7":{id:"g7",name:"G7 Scout",slug:"g7-scout",category:"Präzisionsgewehr",ammo:"Leicht"},
+  "triple-take":{id:"triple-take",name:"Triple Take",slug:"triple-take",category:"Präzisionsgewehr",ammo:"Energie"},
+  "3030":{id:"3030",name:"30-30 Repeater",slug:"30-30-repeater",category:"Präzisionsgewehr",ammo:"Schwer"},
+  "longbow":{id:"longbow",name:"Longbow DMR",slug:"longbow-dmr",category:"Scharfschützengewehr",ammo:"Scharfschütze"},
+  "charge-rifle":{id:"charge-rifle",name:"Charge Rifle",slug:"charge-rifle",category:"Scharfschützengewehr",ammo:"Scharfschütze"},
+  "sentinel":{id:"sentinel",name:"Sentinel",slug:"sentinel",category:"Scharfschützengewehr",ammo:"Scharfschütze"},
+  "kraber":{id:"kraber",name:"Kraber .50-Cal",slug:"kraber",category:"Scharfschützengewehr",ammo:"Versorgung"},
+  "eva8":{id:"eva8",name:"EVA-8 Auto",slug:"eva-8",category:"Schrotflinte",ammo:"Schrot"},
+  "mozambique":{id:"mozambique",name:"Mozambique",slug:"mozambique-akimbo",category:"Schrotflinte",ammo:"Schrot"},
+  "peacekeeper":{id:"peacekeeper",name:"Peacekeeper",slug:"peacekeeper",category:"Schrotflinte",ammo:"Schrot"},
+  "mastiff":{id:"mastiff",name:"Mastiff",slug:"mastiff",category:"Schrotflinte",ammo:"Schrot"},
+  "re45":{id:"re45",name:"RE-45 Auto",slug:"re-45-burst",category:"Pistole",ammo:"Leicht"},
+  "p2020":{id:"p2020",name:"P2020",slug:"p2020",category:"Pistole",ammo:"Leicht"},
+  "wingman":{id:"wingman",name:"Wingman",slug:"wingman",category:"Pistole",ammo:"Schwer"},
+  "bocek":{id:"bocek",name:"Bocek Compound Bow",slug:"bocek-min",category:"Präzisionsgewehr",ammo:"Pfeile"},
 };
-
-function cells(row: string): string[] {
-  return [...row.matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi)].map(match =>
-    match[1].replace(/<[^>]*>/g," ").replace(/&times;/g,"×").replace(/&amp;/g,"&")
-      .replace(/&#x27;/g,"'").replace(/&nbsp;/g," ").replace(/\s+/g," ").trim()
-  );
-}
-function numberAt(value: string | undefined): number | null {
-  if (!value || /measuring|not published|not modelled|not applicable/i.test(value)) return null;
-  const match = value.replace(/,/g,"").match(/\d+(?:\.\d+)?/);
-  return match ? Number(match[0]) : null;
-}
-
-export async function handle(request: Request): Promise<Response> {
-  const token = (process.env as Record<string,string|undefined>).APEX_META_REFRESH_TOKEN;
-  const supplied = request.headers.get("x-apex-meta-refresh-token");
-  if (!token || !supplied || supplied !== token) return Response.json({ok:false,message:"Not authorized."},{status:401});
-  const input = weaponDataRefreshBodySchema.safeParse(await request.json().catch(() => null));
-  if (!input.success) return Response.json({ok:false,message:"Explicit refresh confirmation required."},{status:400});
-  const recent = await db.selectFrom("weapons").select("updatedAt").orderBy("updatedAt","desc").limit(1).executeTakeFirst();
-  if (recent && Date.now() - recent.updatedAt.getTime() < 60 * 60 * 1000) {
-    return Response.json({ok:false,message:"Weapon dataset was checked within the last hour."},{status:429});
-  }
-
-  const response = await fetch(SOURCE,{headers:{Accept:"text/html"},signal:AbortSignal.timeout(15000)});
-  if (!response.ok) return Response.json({ok:false,message:"Data provider returned HTTP "+response.status},{status:502});
-  const html = await response.text();
-  const start = html.indexOf("<tbody");
-  const end = html.indexOf("</tbody>",start);
-  if (start < 0 || end < 0) return Response.json({ok:false,message:"Weapon table not found. No values written."},{status:422});
-  const body = html.slice(start,end);
-  const parsed = [...body.matchAll(/<tr\b[\s\S]*?<\/tr>/gi)].map(match=>cells(match[0])).filter(row=>row.length>=10);
-  if (parsed.length !== 29) return Response.json({ok:false,message:"Expected 29 weapon rows, found "+parsed.length+". No values written."},{status:422});
-
-  const current = await db.selectFrom("weapons").select(["id","name"]).execute();
-  const localIds = new Set(current.map(row=>row.id));
-  const updates: Array<{id:string;name:string;body:number|null;head:number|null;mag:number|null;rpm:number|null}> = [];
-  const providerNames = [
-    "R-301 Carbine","VK-47 Flatline","Havoc Rifle","Hemlok Breach AR","Nemesis Burst AR",
-    "M600 Spitfire","Devotion LMG","L-STAR EMG","Rampage LMG","G7 Scout","30-30 Repeater",
-    "Bocek Compound Bow","Triple Take","P2020","RE-45","Wingman","EVA-8 Auto",
-    "Mozambique Shotgun","Peacekeeper","Mastiff Shotgun","Alternator SMG","C.A.R. SMG",
-    "Prowler PDW","R-99 SMG","Volt SMG","Charge Rifle","Longbow DMR","Sentinel",
-    "Kraber .50-Cal Sniper",
-  ];
-  const aliases: Record<string,string> = {"Havoc Rifle":"HAVOC Rifle","RE-45":"RE-45 Auto","Kraber .50-Cal Sniper":"Kraber .50-Cal"};
-  for (let index=0;index<parsed.length;index++) {
-    const row=parsed[index];
-    if (row.length < 7) return Response.json({ok:false,message:"Unexpected weapon row width at index "+index+". No values written."},{status:422});
-    const name=providerNames[index];
-    // This September baseline predates Season 31 changes to Hemlok, Wingman,
-    // L-STAR and Prowler. Never stamp those values as verified/current.
-    if (["Hemlok Breach AR","L-STAR EMG","Wingman","Prowler PDW"].includes(name)) {
-      updates.push({id:"",name,body:null,head:null,mag:null,rpm:null});
-      continue;
+export async function handle(request:Request):Promise<Response>{
+  const token=(process.env as Record<string,string|undefined>).APEX_META_REFRESH_TOKEN;
+  if(!token||request.headers.get("x-apex-meta-refresh-token")!==token)return Response.json({ok:false,message:"Not authorized."},{status:401});
+  const input=weaponDataRefreshBodySchema.safeParse(await request.json().catch(()=>null));
+  if(!input.success)return Response.json({ok:false,message:"Explicit refresh confirmation required."},{status:400});
+  const current=await db.selectFrom("weapons").select("id").execute();
+  const ids=new Set(current.map(x=>x.id));
+  const errors:string[]=[];
+  const parsed:Array<{id:string;ammo:string;body:string;head:string;leg:string;rpm:string;magazine:number;sourceUrl:string}>=[];
+  const entries=Object.values(WEAPONS);
+  for(let offset=0;offset<entries.length;offset+=5){
+    const batch=entries.slice(offset,offset+5);
+    const results=await Promise.all(batch.map(async weapon=>{
+      if(!ids.has(weapon.id))return {name:weapon.name,error:"weapon ID not present"};
+      try{
+        const sourceUrl=BASE+"/en/weapons/"+weapon.slug;
+        const response=await fetch(sourceUrl,{headers:{Accept:"text/html"},signal:AbortSignal.timeout(12000)});
+        if(!response.ok)return {name:weapon.name,error:"HTTP "+response.status};
+        const html=await response.text();
+        const damage=html.match(/<section class="detail-damage-summary"[\s\S]*?<\/section>/i)?.[0]??"";
+        const body=damage.match(/aria-label="Body Damage ([0-9.]+)"/i)?.[1]??null;
+        const head=damage.match(/aria-label="Head Damage ([0-9.]+)"/i)?.[1]??null;
+        const leg=damage.match(/aria-label="Leg Damage ([0-9.]+)"/i)?.[1]??null;
+        const stats=html.match(/<article class="card"><h3>RPM<\/h3>[\s\S]*?<\/article>/i)?.[0]??"";
+        const rpmText=stats.match(/<strong>([0-9,.]+)<\/strong>/i)?.[1]??null;
+        const magazineBlock=html.match(/<article class="card magazine-card">[\s\S]*?<\/article>/i)?.[0]??"";
+        const magazineText=magazineBlock.match(/data-rarity="none"[\s\S]*?<strong>([0-9]+) rounds<\/strong>/i)?.[1]??null;
+        if(body===null||head===null||leg===null||rpmText===null||magazineText===null)return {name:weapon.name,error:"required source fields missing"};
+        return {id:weapon.id,ammo:weapon.ammo,body,head,leg,rpm:String(Number(rpmText.replace(/,/g,""))),magazine:Number(magazineText),sourceUrl};
+      }catch(error){return {name:weapon.name,error:String(error).slice(0,140)};}
+    }));
+    for(const result of results){
+      if("error" in result)errors.push(result.name+": "+result.error);
+      else parsed.push(result);
     }
-    const localName=aliases[name] ?? name;
-    const id=EXPECTED[localName] ?? EXPECTED[name];
-    if (!id || !localIds.has(id)) return Response.json({ok:false,message:"Unmapped provider entry: "+name+". No values written."},{status:422});
-    const rpmText=(row[6] ?? "").match(/(\d+(?:\.\d+)?)\s*rpm/i)?.[1];
-    updates.push({id,name,body:numberAt(row[2]),head:numberAt(row[3]),mag:numberAt(row[5]),rpm:numberAt(rpmText)});
   }
-  const fetchedAt = new Date();
-  let updated = 0;
-  let skipped = 0;
-  for (const row of updates) {
-    // Update only fields the source explicitly supplies. Older patch values
-    // remain unverified and visibly carry their own source date.
-    if (!row.id || (row.body === null && row.head === null && row.mag === null && row.rpm === null)) { skipped++; continue; }
-    await db.updateTable("weapons").set({
-      bodyDamage:row.body===null?undefined:String(row.body),
-      headDamage:row.head===null?undefined:String(row.head),
-      magazineSize:row.mag===null?undefined:row.mag,
-      fireRate:row.rpm===null?undefined:String(row.rpm),
-      sourceUrl:SOURCE,
-      dataVersion:DATA_VERSION,
-      verifiedAt:fetchedAt,
+  if(parsed.length!==entries.length){
+    const result:WeaponDataRefreshResponse={ok:false,updated:0,skipped:entries.length-parsed.length,source:BASE+"/en",dataVersion:VERSION,fetchedAt:new Date().toISOString(),message:"Preflight incomplete; no database rows were changed. "+errors.slice(0,8).join("; ")};
+    return Response.json(result,{status:422});
+  }
+  const existingVersion=await db.selectFrom("weapons").select("id").where("dataVersion","=",VERSION).execute();
+  if(existingVersion.length===entries.length)return Response.json({ok:false,message:"This dataset version has already been fully imported."},{status:409});
+  const fetchedAt=new Date();
+  await db.transaction().execute(async trx=>{
+    for(const row of parsed)await trx.updateTable("weapons").set({
+      ammoType:row.ammo,bodyDamage:row.body,headDamage:row.head,legDamage:row.leg,
+      fireRate:row.rpm,magazineSize:row.magazine,sourceUrl:row.sourceUrl,
+      dataVersion:VERSION,verifiedAt:fetchedAt,
     }).where("id","=",row.id).execute();
-    updated++;
-  }
-  const result: WeaponDataRefreshResponse = {
-    ok:true,updated,skipped,source:SOURCE,dataVersion:DATA_VERSION,fetchedAt:fetchedAt.toISOString(),
-    message:"This source is behind Season 31. Values are dated to its September 2026 baseline and must not be treated as current Cipher balance.",
-  };
-  return Response.json(result);
+  });
+  const result:WeaponDataRefreshResponse={ok:true,updated:parsed.length,skipped:0,source:BASE+"/en",dataVersion:VERSION,fetchedAt:fetchedAt.toISOString(),message:"All mapped Season 31 Cipher weapon profiles passed preflight and were imported transactionally."};
+  return Response.json(result,{headers:{"Cache-Control":"no-store"}});
 }
