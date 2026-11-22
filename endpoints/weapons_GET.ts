@@ -1,0 +1,25 @@
+import { db } from "../helpers/db";
+import type { WeaponsResponse } from "./weapons_GET.schema";
+
+export async function handle(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const category = url.searchParams.get("category");
+  const search = (url.searchParams.get("search") ?? "").trim().slice(0, 80);
+  let query = db.selectFrom("weapons").select([
+    "id", "name", "category", "ammoType", "fireMode", "bodyDamage",
+    "headDamage", "legDamage", "fireRate", "magazineSize",
+    "reloadSeconds", "recoilNotes", "currentMetaTier", "dataVersion", "sourceUrl", "verifiedAt",
+  ]);
+  if (category) query = query.where("category", "=", category);
+  if (search) query = query.where("name", "ilike", `%${search.replace(/[%_]/g, "")}%`);
+  const weapons = await query.orderBy("category").orderBy("name").execute();
+  const allVerified = weapons.length > 0 && weapons.every(w =>
+    w.verifiedAt && w.sourceUrl && w.bodyDamage !== null && w.headDamage !== null && w.legDamage !== null
+  );
+  const someVerified = weapons.some(w => w.verifiedAt && w.sourceUrl);
+  const body: WeaponsResponse = {
+    weapons: weapons.map(w => ({...w, verifiedAt: w.verifiedAt?.toISOString() ?? null})),
+    dataStatus: allVerified ? "verified" : someVerified ? "partial" : weapons.length ? "partial" : "empty",
+  };
+  return Response.json(body, { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } });
+}

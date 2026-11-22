@@ -1,0 +1,3 @@
+import { z } from "zod";
+export const metaQuerySchema = z.object({ season: z.string().optional(), mode: z.string().optional() });
+export type MetaResponse = { periods: Array<{id:string;weaponId:string;season:string;patchStart:string|null;patchEnd:string|null;mode:string|null;tier:string;evidenceSummary:string|null;sourceUrl:string|null;verifiedAt:string|null}>; evidence: Array<{id:string;weaponId:string;season:string;mode:string;sampleSize:number|null;pickRate:string|null;winRate:string|null;evidenceSummary:string|null;sourceUrl:string;collectedAt:string}> };

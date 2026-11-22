@@ -1,0 +1,3 @@
+import { z } from "zod";
+export const rankedRulesQuerySchema = z.object({ season: z.string().optional() });
+export type RankedRulesResponse = { season: string | null; rules: Array<{ id: string; division: string; entryCost: number | null; sourceUrl: string | null; verifiedAt: string | null }>; adjustments: { challengerDiscountPercent: number; goliathSurchargePercent: number; sourceUrl: string } | null };
