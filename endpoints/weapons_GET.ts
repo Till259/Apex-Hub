@@ -13,13 +13,15 @@ export async function handle(request: Request): Promise<Response> {
   if (category) query = query.where("category", "=", category);
   if (search) query = query.where("name", "ilike", `%${search.replace(/[%_]/g, "")}%`);
   const weapons = await query.orderBy("category").orderBy("name").execute();
-  const allVerified = weapons.length > 0 && weapons.every(w =>
+  const fullyVerified = weapons.length > 0 && weapons.every(w =>
     w.verifiedAt && w.sourceUrl && w.bodyDamage !== null && w.headDamage !== null && w.legDamage !== null
   );
-  const someVerified = weapons.some(w => w.verifiedAt && w.sourceUrl);
+  const sourced = weapons.filter(w => w.sourceUrl && w.verifiedAt).length;
+  const populated = weapons.filter(w => w.bodyDamage !== null || w.headDamage !== null || w.legDamage !== null).length;
   const body: WeaponsResponse = {
     weapons: weapons.map(w => ({...w, verifiedAt: w.verifiedAt?.toISOString() ?? null})),
-    dataStatus: allVerified ? "verified" : someVerified ? "partial" : weapons.length ? "partial" : "empty",
+    dataStatus: fullyVerified ? "verified" : sourced ? "partial" : weapons.length ? "catalog-only" : "empty",
+    quality: { total: weapons.length, sourced, withDamageValues: populated, fullyVerified: fullyVerified ? weapons.length : 0 },
   };
   return Response.json(body, { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } });
 }
