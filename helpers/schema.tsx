@@ -36,6 +36,21 @@ export interface Attachments {
   verifiedAt: Timestamp | null;
 }
 
+export interface Guides {
+  category: string;
+  classification: Generated<string>;
+  content: string;
+  createdAt: Generated<Timestamp>;
+  difficulty: string;
+  id: string;
+  published: Generated<boolean>;
+  readingMinutes: number | null;
+  sourceUrl: string | null;
+  summary: string;
+  title: string;
+  verifiedAt: Timestamp | null;
+}
+
 export interface Legends {
   class: string | null;
   id: string;
@@ -78,6 +93,20 @@ export interface RankedRules {
   season: string;
   sourceUrl: string | null;
   verifiedAt: Timestamp | null;
+}
+
+export interface TeamSynergies {
+  classification: Generated<string>;
+  coordinationTips: string | null;
+  createdAt: Generated<Timestamp>;
+  id: string;
+  legendIds: Generated<Json>;
+  name: string;
+  playstyle: string;
+  sourceUrl: string | null;
+  strengths: string;
+  verifiedAt: Timestamp | null;
+  weaknesses: string;
 }
 
 export interface WeaponAttachments {
@@ -135,10 +164,12 @@ export interface Weapons {
 
 export interface DB {
   attachments: Attachments;
+  guides: Guides;
   legends: Legends;
   mapRotations: MapRotations;
   patchNotes: PatchNotes;
   rankedRules: RankedRules;
+  teamSynergies: TeamSynergies;
   weaponAttachments: WeaponAttachments;
   weaponMetaEvidence: WeaponMetaEvidence;
   weaponMetaPeriods: WeaponMetaPeriods;
