@@ -178,7 +178,7 @@ export default function HomePage() {
               <button className={styles.featureCard} onClick={() => goTo("Tools")}><div className={styles.featureTop}><Target/><span>03</span></div><h3>COMBAT<br/>TOOLS</h3><p>Damage-Rechner und weitere taktische Hilfsmittel.</p><div className={styles.cardLink}>TOOLS ÖFFNEN <ChevronRight size={16}/></div></button>
             </div>
           </section>
-          <section className={styles.sectionBlock}><div className={styles.sectionHeading}><div><div className={styles.eyebrow}>02 / INTEL STATUS</div><h2>AKTUELLE <span>SYSTEMDATEN.</span></h2></div></div><div className={styles.roadmap}><div><Badge variant="success">ONLINE</Badge><strong>Live-Map-Rotation</strong><span>BR, Ranked, Mixtape und Wildcard aus der API</span></div><div><Badge variant="success">ONLINE</Badge><strong>Spielerprofile</strong><span>Öffentliche Profile auf PC, PlayStation und Xbox</span></div><div><Badge variant="warning">DATEN WERDEN ERGÄNZT</Badge><strong>Waffen & Meta</strong><span>Nur belegte Werte und Zeiträume; fehlende Felder bleiben leer</span></div></div></section>
+          <section className={styles.sectionBlock}><div className={styles.sectionHeading}><div><div className={styles.eyebrow}>02 / INTEL STATUS</div><h2>AKTUELLE <span>SYSTEMDATEN.</span></h2></div></div><div className={styles.roadmap}><div><Badge variant={rotation ? "success" : "outline"}>{rotation ? "ABRUF ERFOLGT" : "API VERBUNDEN · LIVE-ABRUF IN TOOLS"}</Badge><strong>Live-Map-Rotation</strong><span>Der API-Key ist hinterlegt. Die aktuelle Rotation wird beim Öffnen des Map-Tools live abgefragt.</span></div><div><Badge variant="warning">ABRUF AUF ANFRAGE</Badge><strong>Spielerprofile</strong><span>PC, PlayStation und Xbox: Profilwerte werden erst nach Eingabe eines Spielernamens beim Anbieter abgefragt.</span></div><div><Badge variant="warning">DATEN WERDEN ERGÄNZT</Badge><strong>Waffen & Meta</strong><span>29 Waffen im Katalog; Schadenswerte und vollständige Legendenprofile sind noch nicht importiert. Unbestätigte Werte bleiben leer.</span></div></div></section>
         </>}
         {activeTab === "Waffen" && <section className={styles.sectionBlock}><div className={styles.sectionHeading}><div><div className={styles.eyebrow}>ARSENAL / DATABASE</div><h2>WAFFEN <span>ÜBERSICHT.</span></h2><p>{weaponDataStatus}</p></div><Badge variant="outline">{filteredWeapons.length} EINTRÄGE</Badge></div><div className={styles.filters}><div className={styles.searchBox}><Search size={17}/><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Waffe suchen …" aria-label="Waffe suchen"/></div><Select value={category} onValueChange={setCategory}><SelectTrigger className={styles.categorySelect}><SelectValue placeholder="Waffengattung"/></SelectTrigger><SelectContent>{categories.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select></div><div className={styles.weaponGrid}>{filteredWeapons.map((weapon, index) => <button key={weapon.id ?? weapon.name} className={styles.weaponCard} onClick={() => setSelectedWeapon(weapon)}><div className={styles.weaponIndex}>APX-{String(index + 1).padStart(2,"0")}<span>{weapon.ammo}</span></div><h3>{weapon.name}</h3><div className={styles.weaponMeta}><span>{weapon.category}</span><span>{weapon.role}</span></div><div className={styles.weaponOpen}>PROFIL ANSEHEN <ArrowUpRight size={14}/></div></button>)}</div><p className={styles.dataNote}>Numerische Werte, Attachments und TTK werden nur angezeigt, wenn sie mit Quelle und Patch-Stand hinterlegt sind.</p></section>}
         {activeTab === "Meta" && <section className={styles.sectionBlock}><div className={styles.eyebrow}>COMPETITIVE INTELLIGENCE</div><h2>SEASON META <span>& ARCHIV.</span></h2><div className={styles.callout}><Zap/><div><strong>{metaLoading ? "Meta-Daten werden geladen …" : "Quellenbasierte Meta-Übersicht"}</strong><p>Offizielle EA-Balance-Änderungen und Community-Statistiken werden getrennt geführt. Jede Historie hat einen Patch-Zeitraum und eine Quelle.</p></div></div>{metaError && <p className={styles.dataNote}>{metaError}</p>}{metaPeriods.length > 0 && <><h3>SEASON-/PATCH-HISTORIE</h3><div className={styles.featureGrid}>{metaPeriods.map(item=><article className={styles.infoCard} key={item.id}><span>{item.season} {item.mode ? `· ${item.mode}` : ""}</span><h3>{weapons.find(w=>w.id===item.weaponId)?.name ?? item.weaponId} · {item.tier}</h3><p>{item.patchStart ?? "Start unbekannt"} – {item.patchEnd ?? "laufend / Ende offen"}. {item.evidenceSummary ?? ""}</p>{item.sourceUrl && <a className={styles.cardLink} href={item.sourceUrl} target="_blank" rel="noreferrer">QUELLE ÖFFNEN <ArrowUpRight size={14}/></a>}</article>)}</div></>}{metaEvidence.length > 0 && <><h3>COMMUNITY-/TRACKER-EVIDENZ</h3><div className={styles.featureGrid}>{metaEvidence.map(item=><article className={styles.infoCard} key={item.id}><span>{item.season} · {item.mode}</span><h3>{legends.find(l=>l.id===item.weaponId)?.name ?? weapons.find(w=>w.id===item.weaponId)?.name ?? item.weaponId}</h3><p>{item.pickRate ? `Pick-Rate: ${item.pickRate}% · ` : ""}{item.winRate ? `Win-Rate: ${item.winRate}% · ` : ""}{item.sampleSize ? `Stichprobe: ${item.sampleSize} · ` : ""}{item.evidenceSummary ?? "Keine zusätzliche Zusammenfassung."}</p><a className={styles.cardLink} href={item.sourceUrl} target="_blank" rel="noreferrer">DATENQUELLE <ArrowUpRight size={14}/></a><p>Erfasst: {new Date(item.collectedAt).toLocaleDateString("de-DE")}</p></article>)}</div></>}{metaPeriods.length===0 && metaEvidence.length===0 && !metaLoading && <div className={styles.infoCard}><span>DATENSTATUS</span><h3>Noch keine Community-Stichprobe gespeichert</h3><p>Die bestätigten Season-31-Balanceänderungen stehen im Patch-Archiv und die Waffenphasen werden hier chronologisch geführt. Pick-/Win-Rates erscheinen erst, wenn ein abrufbarer, vollständiger Datensatz vorliegt.</p></div>}<h3>ALL-TIME-META-PRINZIP</h3><p className={styles.dataNote}>Eine Waffe gilt im Archiv nur für den Zeitraum als Meta, in dem Patch-Hinweise oder eine dokumentierte Competitive-/Pickrate-Auswertung sie belegen. Ein Nerf allein ist kein Beweis für eine Tier-Stufe.</p></section>}
@@ -192,4 +192,64 @@ export default function HomePage() {
     <footer className={styles.footer}><div className={styles.footerInner}><div className={styles.brand}><span className={styles.brandMark}>A</span><span>APEX<span className={styles.brandAccent}>HUB</span></span></div><p>INDEPENDENT FAN PROJECT · NOT AFFILIATED WITH EA OR RESPAWN.</p><span>BUILD 0.1.0 / 2026</span></div><p className={styles.disclaimer}>Apex Legends is a trademark of Electronic Arts. APEX HUB is an independent fan project.</p></footer>
     {selectedWeapon && <div className={styles.modalBackdrop} onClick={() => setSelectedWeapon(null)}><div className={styles.weaponModal} onClick={(event) => event.stopPropagation()}><button className={styles.modalClose} onClick={() => setSelectedWeapon(null)} aria-label="Schließen"><X/></button><div className={styles.eyebrow}>WEAPON PROFILE / CATALOGUE</div><h2>{selectedWeapon.name}</h2><div className={styles.modalTags}><Badge variant="outline">{selectedWeapon.category}</Badge><Badge variant="secondary">{selectedWeapon.ammo}</Badge><Badge variant="secondary">{selectedWeapon.role}</Badge></div><div className={styles.modalStats}><div><span>BODY DAMAGE</span><strong>{selectedWeapon.bodyDamage ?? "–"}</strong></div><div><span>HEAD DAMAGE</span><strong>{selectedWeapon.headDamage ?? "–"}</strong></div><div><span>LEG DAMAGE</span><strong>{selectedWeapon.legDamage ?? "–"}</strong></div></div><div className={styles.modalStats}><div><span>MAGAZINE</span><strong>{selectedWeapon.magazineSize ?? "–"}</strong></div><div><span>FIRE RATE / RPM</span><strong>{selectedWeapon.fireRate ?? "–"}</strong></div><div><span>RELOAD / SEC</span><strong>{selectedWeapon.reloadSeconds ?? "–"}</strong></div></div>{selectedWeapon.recoilNotes && <p><strong>Recoil:</strong> {selectedWeapon.recoilNotes}</p>}{selectedWeapon.currentMetaTier && <p><strong>Meta:</strong> {selectedWeapon.currentMetaTier}</p>}<p className={styles.dataNote}>Datenstand: {selectedWeapon.dataVersion ?? "Nicht gesetzt"} · {selectedWeapon.verifiedAt ? `Verifiziert: ${new Date(selectedWeapon.verifiedAt).toLocaleDateString("de-DE")}` : "Noch nicht verifiziert"}</p>{selectedWeapon.sourceUrl && <a className={styles.cardLink} href={selectedWeapon.sourceUrl} target="_blank" rel="noreferrer">DATENQUELLE ÖFFNEN <ArrowUpRight size={14}/></a>}<h3>AUFSÄTZE</h3>{attachmentsLoading ? <p>Aufsätze werden geladen …</p> : attachments.length===0 ? <p>Für diese Waffe sind noch keine quellengeprüften Aufsatzdaten hinterlegt.</p> : attachments.map(a=><div key={a.id} className={styles.weaponMeta}><strong>{a.name}</strong><span>{a.slot}</span><span>{a.effectSummary ?? "Effekt nicht hinterlegt"}</span></div>)}<p>Ein Strich bedeutet: Für diesen Wert liegt noch keine ausreichend geprüfte Angabe in der Datenbank vor.</p><Button onClick={() => setSelectedWeapon(null)}>Schließen</Button></div></div>}
   </div>;
+}
+
+endpoints/meta-refresh_POST.ts — lines 1-58 of 58 (version: 1795429627876, sha256: 79b1e61247c6f47cb16c6357d6ea3e0a3e83954e045c0852afe8d2fe873800ce)
+import { metaRefreshBodySchema } from "./meta-refresh_POST.schema";
+import { db } from "../helpers/db";
+
+const SOURCE = "https://apexdb.gg/meta/";
+
+const legendNames = [
+  "Octane","Pathfinder","Wraith","Lifeline","Loba","Bangalore","Seer","Revenant",
+  "Alter","Mad Maggie","Conduit","Vantage","Crypto","Valkyrie","Catalyst","Horizon",
+  "Ash","Axle","Gibraltar","Bloodhound","Fuse","Wattson","Mirage","Caustic",
+  "Rampart","Sparrow","Newcastle","Ballistic",
+];
+
+function safePattern(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export async function handle(request: Request): Promise<Response> {
+  const key = (process.env as Record<string,string|undefined>).APEX_META_REFRESH_TOKEN;
+  const supplied = request.headers.get("x-apex-meta-refresh-token");
+  if (!key || !supplied || supplied !== key) return Response.json({ok:false,message:"Nicht autorisiert."},{status:401});
+  const recent = await db.selectFrom("weaponMetaEvidence").select("collectedAt").where("mode","=","Legend pick-rate cohort").orderBy("collectedAt","desc").limit(1).executeTakeFirst();
+  if (recent && Date.now() - recent.collectedAt.getTime() < 60 * 60 * 1000) return Response.json({ok:false,message:"Meta wurde innerhalb der letzten Stunde bereits aktualisiert."},{status:429});
+  const input = metaRefreshBodySchema.safeParse(await request.json().catch(() => null));
+  if (!input.success) return Response.json({ok:false,message:"Bestätigung fehlt."},{status:400});
+
+  const response = await fetch(SOURCE,{headers:{Accept:"text/html"},signal:AbortSignal.timeout(12000)});
+  if (!response.ok) return Response.json({ok:false,message:"Meta-Quelle antwortet mit HTTP "+response.status},{status:502});
+  const html = await response.text();
+  const parsed: Array<{name:string;pickRate:number;band:string}> = [];
+  for (const name of legendNames) {
+    const re = new RegExp(safePattern(name)+"[\\s\\S]{0,100}?([0-9]+(?:\\.[0-9]+)?% picked)\\s*\\(([0-9.]+%\\s*[–-]\\s*[0-9.]+%)\\)","i");
+    const match = html.match(re);
+    if (!match) continue;
+    const value = Number(match[1].match(/[0-9.]+/)?.[0]);
+    if (Number.isFinite(value)) parsed.push({name,pickRate:value,band:match[2]});
+  }
+  if (parsed.length !== 28) return Response.json({ok:false,message:"Parser hat nur "+parsed.length+" von 28 Legenden erkannt; es wurden keine Daten gespeichert."},{status:422});
+
+  const rows = await db.selectFrom("legends").select(["id","name"]).execute();
+  const map = new Map(rows.map(row=>[row.name.toLowerCase(),row.id]));
+  if (parsed.some(row=>!map.has(row.name.toLowerCase()))) return Response.json({ok:false,message:"Quell-Legenden passen nicht zum gespeicherten Kader."},{status:422});
+
+  const timestamp = new Date();
+  for (const row of parsed) {
+    const legendId = map.get(row.name.toLowerCase())!;
+    const id = "community-meta-s31-"+row.name.toLowerCase().replace(/[^a-z0-9]+/g,"-");
+    const description = "Season 31 community meta tracker. 2,270 lookups, 23 Oct–19 Nov 2026; 95% confidence band "+row.band+". Third-party data, not an official EA ranking. Refreshed "+timestamp.toISOString();
+    await db.insertInto("weaponMetaEvidence").values({
+      id,weaponId:legendId,season:"Cipher / Season 31",mode:"Legend pick-rate cohort",
+      sampleSize:2270,pickRate:String(row.pickRate),winRate:null,
+      evidenceSummary:description,sourceUrl:SOURCE,collectedAt:timestamp,
+    }).onConflict(oc=>oc.column("id").doUpdateSet({
+      sampleSize:2270,pickRate:String(row.pickRate),evidenceSummary:description,
+      sourceUrl:SOURCE,collectedAt:timestamp,
+    })).execute();
+  }
+  return Response.json({ok:true,updated:parsed.length,season:"Cipher / Season 31",source:SOURCE,refreshedAt:timestamp.toISOString()});
 }
